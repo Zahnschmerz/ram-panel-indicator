@@ -1,0 +1,51 @@
+#!/usr/bin/awk -f
+#
+# ram-nurzahl - show used RAM as a bare number in the panel, e.g. "6,8 GiB"
+#
+# Meant to be run by xfce4-genmon-plugin, which displays whatever this prints.
+# Output is genmon XML: <txt> is the panel text, <tool> the tooltip.
+#
+# Used memory is computed as   MemTotal - MemAvailable.
+# That is the honest figure: it answers "how much can I still start without
+# closing anything?" - the kernel already accounts for the part of the page
+# cache it can hand back. It matches what modern `free` prints under "used"
+# and what Conky reports with no_buffers = true.
+#
+# Usage:   ram-nurzahl /proc/meminfo
+# License: MIT
+
+BEGIN {
+    FS = "[: ]+"
+
+    # Language of the tooltip. Auto-detected from the environment; override by
+    # setting DE to 1 (German) or 0 (English) here.
+    DE = (ENVIRON["LC_ALL"] ENVIRON["LC_MESSAGES"] ENVIRON["LANG"] ~ /^de/) ? 1 : 0
+}
+
+$1 == "MemTotal"     { total     = $2 / 1024 / 1024 }   # KiB -> GiB
+$1 == "MemAvailable" { available = $2 / 1024 / 1024 }
+
+END {
+    if (total <= 0) { print "<txt>?</txt>"; exit 1 }
+
+    used    = total - available
+    percent = used / total * 100
+
+    # The trailing \302\240 is a non-breaking space: without it the number
+    # sits flush against whatever follows it in the panel (usually the clock).
+    printf "<txt>%s GiB\302\240</txt>", num(used)
+
+    if (DE)
+        printf "<tool>Arbeitsspeicher belegt: %s von %s GiB (%d %%)</tool>\n", \
+               num(used), num(total), percent + 0.5
+    else
+        printf "<tool>Memory in use: %s of %s GiB (%d %%)</tool>\n", \
+               num(used), num(total), percent + 0.5
+}
+
+# 5.0 -> "5,0" in German locales, "5.0" elsewhere
+function num(value,   text) {
+    text = sprintf("%.1f", value)
+    if (DE) sub(/\./, ",", text)
+    return text
+}

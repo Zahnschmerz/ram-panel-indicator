@@ -1,0 +1,5 @@
+Command=/home/YOUR_USER/.local/bin/ram-nurzahl /proc/meminfo
+UseLabel=0
+Text=(genmon)
+UpdatePeriod=2000
+Font=Noto Sans 10.5

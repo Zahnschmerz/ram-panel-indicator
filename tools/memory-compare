@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+"""Print the three common "used memory" figures side by side.
+
+They can differ by several GiB on the same machine at the same moment, and
+none of them is wrong - they answer different questions. If two programs on
+your desktop disagree about memory, this shows why.
+
+IMPORTANT: /proc/meminfo is read exactly once. Two separate reads sample two
+different moments, and then identical formulas look like they disagree.
+"""
+
+G = 1024 * 1024  # KiB -> GiB
+
+m = {}
+with open("/proc/meminfo") as handle:
+    for line in handle:
+        parts = line.replace(":", "").split()
+        m[parts[0]] = int(parts[1])          # KiB
+
+total = m["MemTotal"] / G
+a = (m["MemTotal"] - m["MemAvailable"]) / G
+b = (m["MemTotal"] - m["MemFree"] - m["Buffers"]
+     - m["Cached"] - m["SReclaimable"]) / G
+c = (m["MemTotal"] - m["MemFree"]) / G
+
+print("Total memory: %.1f GiB\n" % total)
+print("A) total - available            %5.1f GiB  (%2.0f %%)" % (a, a / total * 100))
+print("     <- this panel indicator, modern `free`, Conky with no_buffers=true,")
+print("        KDE, Cinnamon and Budgie system monitors")
+print("B) old free formula             %5.1f GiB  (%2.0f %%)" % (b, b / total * 100))
+print("     <- pre-procps-ng; still quoted in older guides")
+print("C) total - completely free      %5.1f GiB  (%2.0f %%)" % (c, c / total * 100))
+print("     <- looks like 'memory full', but is mostly reclaimable page cache")
+print()
+print("Page cache (reclaimable):       %5.1f GiB" % ((m["Cached"] + m["Buffers"]) / G))
+print("Available without closing anything: %.1f GiB" % (m["MemAvailable"] / G))
+if m.get("SwapTotal", 0) > 0:
+    print("Swap in use:                    %5.1f of %.1f GiB"
+          % ((m["SwapTotal"] - m["SwapFree"]) / G, m["SwapTotal"] / G))

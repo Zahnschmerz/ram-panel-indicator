@@ -1,0 +1,11 @@
+[Plugin]
+Module=ram_nurzahl
+Loader=python3
+Name=RAM (number only)
+Name[de]=RAM (nur Zahl)
+Description=Shows used memory in GiB as a bare number in the panel.
+Description[de]=Zeigt den belegten Arbeitsspeicher in GiB als nackte Zahl in der Leiste.
+Authors=Zahnschmerz
+Copyright=Copyright Zahnschmerz
+Website=https://github.com/Zahnschmerz/ram-panel-indicator
+Icon=utilities-system-monitor
