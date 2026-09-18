@@ -13,6 +13,20 @@ Two desktops are covered, each with the smallest thing that works there:
 Both print the same figure and behave identically.
 Tooltip and decimal separator follow your locale (German or English).
 
+### Xfce: two looks
+
+| Script | Look |
+|---|---|
+| `xfce/ram-nurzahl` | the bare number in the panel font |
+| `xfce/ram-pille` | the number in a rounded, tinted pill — blue while there is room, **orange from 80 %** — with a richer tooltip (free, used %, swap) |
+
+![The pill, normal and above 80 %](xfce/pill.png)
+
+genmon cannot style its label, so `ram-pille` draws the pill as a small SVG in
+`$XDG_RUNTIME_DIR` on every run and shows it through genmon's `<img>` tag.
+It is drawn in [Outfit](https://fonts.google.com/specimen/Outfit) when that font
+is installed, otherwise in a plain sans.
+
 ---
 
 ## Which number is this, and why
@@ -66,7 +80,8 @@ Neither needs root; nothing outside your home directory is touched.
 
 ## Requirements
 
-* **Xfce:** `xfce4-genmon-plugin` (ships with most Xfce spins), `awk`, `xfconf-query`
+* **Xfce:** `xfce4-genmon-plugin` (ships with most Xfce spins), `awk`, `xfconf-query`;
+  for the pill also the SVG image loader (`librsvg2-common` on Debian/Ubuntu, usually present)
 * **Budgie:** `budgie-desktop`, `python3`, `python3-gi`, `gir1.2-budgie-1.0`
 * **tools/memory-compare:** `python3` only
 
@@ -118,6 +133,10 @@ sonst nichts. Kein Balken, keine Kurve, keine Beschriftung. Erneuert sich alle
 zwei Sekunden. Für **Xfce** (über `xfce4-genmon-plugin`) und **Budgie** (kleines
 eigenes Applet). Sprache und Komma richten sich nach der Systemsprache.
 
+**Für Xfce gibt es zwei Aussehen:** `ram-nurzahl` (nur die Zahl) oder `ram-pille`
+— die Zahl in einer farbigen Kapsel, **blau** im Normalfall, **orange ab 80 %**,
+dazu eine ausführlichere Sprechblase (frei, belegt in Prozent, Auslagerung).
+
 **Die Zahl** ist `MemTotal − MemAvailable` — dieselbe, die `free` unter „benutzt"
 zeigt. Sie beantwortet die Frage, die man wirklich stellt: *Wie viel kann ich noch
 starten, ohne etwas zu schliessen?*
@@ -131,6 +150,10 @@ zurückgibt. `tools/memory-compare` zeigt alle drei Rechenwege nebeneinander.
 Administratorrechte nötig, es wird nichts ausserhalb des eigenen Ordners verändert.
 
 ---
+
+## Author
+
+Gilbert Rikus
 
 ## License
 

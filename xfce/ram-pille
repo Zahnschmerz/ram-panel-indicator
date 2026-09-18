@@ -1,0 +1,68 @@
+#!/usr/bin/awk -f
+#
+# ram-pille - show used RAM as a coloured pill in the panel, e.g. [ 6,8 GiB ]
+#
+# Meant to be run by xfce4-genmon-plugin. The pill is drawn as a small SVG
+# (genmon cannot style its label), written to $XDG_RUNTIME_DIR and shown
+# through <img>. Blue while there is room, orange above WARN percent.
+#
+# Used memory is computed as   MemTotal - MemAvailable   (same as `free`).
+#
+# Usage:   ram-pille /proc/meminfo
+# License: MIT
+
+BEGIN {
+    FS = "[: ]+"
+    DE   = (ENVIRON["LC_ALL"] ENVIRON["LC_MESSAGES"] ENVIRON["LANG"] ~ /^de/) ? 1 : 0
+    WARN = 80
+    BLUE = "#51B4DF"; ORANGE = "#FB9B3F"; GREY = "#8a8178"
+    FONT = "Outfit, Quicksand, DejaVu Sans, sans-serif"
+    HEIGHT = 30
+    dir = ENVIRON["XDG_RUNTIME_DIR"]; if (dir == "") dir = "/tmp"
+    svg = dir "/ram-pille.svg"
+}
+
+$1 == "MemTotal"     { total     = $2 / 1048576 }   # KiB -> GiB
+$1 == "MemAvailable" { available = $2 / 1048576 }
+$1 == "SwapTotal"    { swaptotal = $2 / 1048576 }
+$1 == "SwapFree"     { swapfree  = $2 / 1048576 }
+
+END {
+    if (total <= 0) { print "<txt>?</txt>"; exit 1 }
+
+    used    = total - available
+    percent = int(used / total * 100 + 0.5)
+    colour  = (percent >= WARN) ? ORANGE : BLUE
+    value   = num(used)
+
+    # Rough text width: bold digits ~11 px, comma ~5 px, " GiB" ~33 px.
+    width = 14 + length(value) * 11 + 33 + 14
+
+    printf "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\">", width, HEIGHT, width, HEIGHT > svg
+    printf "<rect x=\"0.5\" y=\"0.5\" width=\"%d\" height=\"%d\" rx=\"%d\" fill=\"%s\" fill-opacity=\"0.18\" stroke=\"%s\" stroke-opacity=\"0.4\"/>", width - 1, HEIGHT - 1, (HEIGHT - 1) / 2, colour, colour > svg
+    printf "<text x=\"%d\" y=\"21\" text-anchor=\"middle\" font-family=\"%s\" fill=\"%s\">", width / 2, FONT, colour > svg
+    printf "<tspan font-size=\"19\" font-weight=\"700\">%s</tspan><tspan font-size=\"14\" font-weight=\"600\" fill-opacity=\"0.8\" dx=\"5\">GiB</tspan></text></svg>\n", value > svg
+    close(svg)
+
+    printf "<img>%s</img>", svg
+
+    # Tooltip (Pango markup): title, big number, bar, three small values.
+    filled = ""; empty = ""
+    for (i = 0; i < 20; i++) { if (i < int(percent / 5 + 0.5)) filled = filled "━"; else empty = empty "━" }
+
+    printf "<tool><span size=\"small\" weight=\"bold\" foreground=\"%s\">%s</span>\n", GREY, DE ? "ARBEITSSPEICHER" : "MEMORY"
+    printf "<span size=\"xx-large\" weight=\"bold\">%s</span>  <span foreground=\"%s\">%s %s GiB %s</span>\n", \
+           value, GREY, DE ? "von" : "of", num(total), DE ? "belegt" : "in use"
+    printf "<span foreground=\"%s\">%s</span><span foreground=\"%s\" alpha=\"35%%\">%s</span>\n", colour, filled, GREY, empty
+    printf "<span foreground=\"%s\">%s</span> %s GiB   <span foreground=\"%s\">%s</span> %d %%   <span foreground=\"%s\">%s</span> %s GiB</tool>\n", \
+           GREY, DE ? "Frei" : "Free", num(available), \
+           GREY, DE ? "Belegt" : "Used", percent, \
+           GREY, DE ? "Auslagerung" : "Swap", num(swaptotal - swapfree)
+}
+
+# 5.0 -> "5,0" in German locales, "5.0" elsewhere
+function num(value,   text) {
+    text = sprintf("%.1f", value)
+    if (DE) sub(/\./, ",", text)
+    return text
+}

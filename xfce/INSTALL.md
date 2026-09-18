@@ -10,6 +10,25 @@ install -Dm755 ram-nurzahl ~/.local/bin/ram-nurzahl
 ~/.local/bin/ram-nurzahl /proc/meminfo      # should print <txt>...</txt><tool>...</tool>
 ```
 
+**Prefer the pill?** Install `ram-pille` instead and use its name in step 3
+wherever `ram-nurzahl` appears:
+
+```sh
+install -Dm755 ram-pille ~/.local/bin/ram-pille
+~/.local/bin/ram-pille /proc/meminfo        # should print <img>...</img><tool>...</tool>
+```
+
+Already running `ram-nurzahl` and want to switch without touching the panel?
+Point the old name at the new script — genmon picks it up on its next refresh:
+
+```sh
+ln -sf ram-pille ~/.local/bin/ram-nurzahl
+```
+
+Optional: the pill is designed for the [Outfit](https://fonts.google.com/specimen/Outfit)
+font (SIL Open Font License). Put `Outfit[wght].ttf` in `~/.local/share/fonts/`
+and run `fc-cache -f`.
+
 ## 2. Add the plugin
 
 ```sh
